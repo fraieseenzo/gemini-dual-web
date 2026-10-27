@@ -812,36 +812,11 @@ class MainActivity : AppCompatActivity() {
     private fun buildAppPromoSuppressionScript(): String {
         return """
             (function() {
-              var injectSafeLayoutCss = function() {
-                var styleId = 'gemini-dual-safe-layout-css';
-                if (document.getElementById(styleId)) return;
-                var root = document.head || document.documentElement;
-                if (!root) return;
-                var style = document.createElement('style');
-                style.id = styleId;
-                style.type = 'text/css';
-                style.appendChild(document.createTextNode(
-                  'main, [role="main"], .chat-window, infinite-scroller { ' +
-                  '  display: flex !important; ' +
-                  '  flex: 1 1 auto !important; ' +
-                  '  min-height: 0 !important; ' +
-                  '  visibility: visible !important; ' +
-                  '} ' +
-                  'footer, [role="contentinfo"], .bottom-container, .input-area-container { ' +
-                  '  margin-top: auto !important; ' +
-                  '}'
-                ));
-                root.appendChild(style);
-              };
-
-              injectSafeLayoutCss();
-
               if (window.__gemini_cleaner_installed__) return;
               window.__gemini_cleaner_installed__ = true;
 
-              function dismissPromptsSafely() {
-                injectSafeLayoutCss();
-
+              function dismissPrompts() {
+                // Auto-click "Continue in the browser"
                 const buttons = document.querySelectorAll('button, a, [role="button"], span');
                 for (const el of buttons) {
                   const text = (el.innerText || el.textContent || '').trim().toLowerCase();
@@ -851,6 +826,7 @@ class MainActivity : AppCompatActivity() {
                   }
                 }
 
+                // Auto-dismiss thin top app banner
                 const spans = document.querySelectorAll('span, p, div');
                 for (const span of spans) {
                   if (span.children.length === 0 && (span.textContent || '').includes('Chat with Gemini in an app')) {
@@ -874,14 +850,14 @@ class MainActivity : AppCompatActivity() {
                 }
               }
 
-              dismissPromptsSafely();
+              dismissPrompts();
               let tries = 0;
-              const interval = setInterval(() => {
-                dismissPromptsSafely();
-                if (++tries > 15) clearInterval(interval);
+              const poll = setInterval(() => {
+                dismissPrompts();
+                if (++tries > 15) clearInterval(poll);
               }, 400);
 
-              window.addEventListener('popstate', () => setTimeout(dismissPromptsSafely, 300));
+              window.addEventListener('popstate', () => setTimeout(dismissPrompts, 300));
             })();
         """.trimIndent()
     }
@@ -905,6 +881,7 @@ class MainActivity : AppCompatActivity() {
                 style.appendChild(document.createTextNode(
                     ':root, html, body, chat-app, main, [role="main"], .bard-sidenav-container, .chat-container { ' +
                     'background-color: #000000 !important; ' +
+                    'background: #000000 !important; ' +
                     '--bard-color-surface: #000000 !important; ' +
                     '--gm3-sys-color-surface: #000000 !important; ' +
                     '--gm3-sys-color-background: #000000 !important; ' +
