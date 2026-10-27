@@ -96,6 +96,91 @@
                         android:textColor="@color/text_secondary"
                         android:textSize="13sp" />
 
+                    <!-- Session & Gestures Card -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:cardBackgroundColor="@color/surface_elevated"
+                        app:cardCornerRadius="14dp"
+                        app:cardElevation="0dp"
+                        app:strokeColor="@color/divider_dark"
+                        app:strokeWidth="1dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="12dp"
+                                android:text="@string/settings_section_session"
+                                android:textColor="@color/text_primary"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="12dp"
+                                android:orientation="horizontal"
+                                android:weightSum="2">
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btnReloadAccountAlpha"
+                                    style="@style/Widget.Material3.Button.OutlinedButton"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:layout_weight="1"
+                                    android:text="@string/settings_reload_alpha"
+                                    android:textColor="@color/text_primary"
+                                    android:textSize="13sp"
+                                    app:strokeColor="@color/divider_dark" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btnReloadAccountBeta"
+                                    style="@style/Widget.Material3.Button.OutlinedButton"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="6dp"
+                                    android:layout_weight="1"
+                                    android:text="@string/settings_reload_beta"
+                                    android:textColor="@color/text_primary"
+                                    android:textSize="13sp"
+                                    app:strokeColor="@color/divider_dark" />
+
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:layout_marginVertical="8dp"
+                                android:background="@color/divider_dark" />
+
+                            <com.google.android.material.switchmaterial.SwitchMaterial
+                                android:id="@+id/switchPullToRefresh"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:checked="false"
+                                android:text="@string/settings_pull_to_refresh_title"
+                                android:textColor="@color/text_primary"
+                                android:textSize="15sp" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/settings_pull_to_refresh_desc"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
                     <!-- FAB Configuration Card -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"

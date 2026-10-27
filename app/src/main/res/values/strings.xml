@@ -12,7 +12,14 @@
 
     <!-- Settings UI Strings -->
     <string name="settings_header_title">Workspace Customization</string>
-    <string name="settings_header_subtitle">Configure floating tools, AMOLED rendering, and accent themes without reloading sessions.</string>
+    <string name="settings_header_subtitle">Configure session controls, floating tools, AMOLED rendering, and accent themes without losing session state.</string>
+    <string name="settings_section_session">Session &amp; Gestures</string>
+    <string name="settings_reload_alpha">Reload Account 1</string>
+    <string name="settings_reload_beta">Reload Account 2</string>
+    <string name="settings_pull_to_refresh_title">Enable Pull-to-Refresh Gesture</string>
+    <string name="settings_pull_to_refresh_desc">Disabled by default to prevent accidental page reloads while scrolling up in chat. Tip: Tap the active Account tab again to reload anytime.</string>
+    <string name="toast_reloading_alpha">Reloading Account 1…</string>
+    <string name="toast_reloading_beta">Reloading Account 2…</string>
     <string name="settings_section_fab">Prompt Vault Floating Button</string>
     <string name="settings_fab_visibility_title">Show Prompt Vault FAB</string>
     <string name="settings_fab_visibility_desc">Display the draggable quick-prompt button over WebViews</string>

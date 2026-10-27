@@ -51,6 +51,7 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_LAST_ACCOUNT_TAB = "key_last_account_tab"
 
         private const val PREFS_NAME = "gemini_dual_web_prefs"
+        private const val PREF_PULL_TO_REFRESH = "pref_pull_to_refresh"
         private const val PREF_FAB_VISIBLE = "pref_fab_visible"
         private const val PREF_FAB_SIZE_DP = "pref_fab_size_dp"
         private const val PREF_FAB_X = "pref_fab_x"
@@ -173,14 +174,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupSwipeRefreshContainers() {
-        configureSwipeRefresh(binding.swipeRefreshAlpha, binding.webViewAlpha)
-        configureSwipeRefresh(binding.swipeRefreshBeta, binding.webViewBeta)
+        val pullToRefreshEnabled = prefs.getBoolean(PREF_PULL_TO_REFRESH, false)
+        configureSwipeRefresh(binding.swipeRefreshAlpha, binding.webViewAlpha, pullToRefreshEnabled)
+        configureSwipeRefresh(binding.swipeRefreshBeta, binding.webViewBeta, pullToRefreshEnabled)
     }
 
     private fun configureSwipeRefresh(
         swipeRefresh: SwipeRefreshLayout,
-        webView: WebView
+        webView: WebView,
+        isEnabledByDefault: Boolean
     ) {
+        // Disabled by default to prevent accidental refresh when scrolling inside Gemini's inner overflow container
+        swipeRefresh.isEnabled = isEnabledByDefault
         swipeRefresh.setProgressBackgroundColorSchemeColor(
             ContextCompat.getColor(this, R.color.surface_elevated)
         )
@@ -571,12 +576,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupSettingsControls() {
+        val isPullToRefreshEnabled = prefs.getBoolean(PREF_PULL_TO_REFRESH, false)
         val isFabVisible = prefs.getBoolean(PREF_FAB_VISIBLE, true)
         val fabSizeDp = prefs.getInt(PREF_FAB_SIZE_DP, FAB_SIZE_NORMAL_DP)
         val isAmoledBlack = prefs.getBoolean(PREF_AMOLED_BLACK, true)
         val accentPreset = prefs.getString(PREF_ACCENT_COLOR, ACCENT_BLUE) ?: ACCENT_BLUE
 
         // Initialize UI states
+        binding.switchPullToRefresh.isChecked = isPullToRefreshEnabled
+        applyPullToRefreshEnabled(isPullToRefreshEnabled)
+
         binding.switchFabVisibility.isChecked = isFabVisible
         applyFabVisibility(isFabVisible)
 
@@ -596,7 +605,25 @@ class MainActivity : AppCompatActivity() {
         }
         applyAccentColorPreset(accentPreset)
 
+        // Session reload action buttons
+        binding.btnReloadAccountAlpha.setOnClickListener {
+            binding.webViewAlpha.reload()
+            binding.bottomNavigation.selectedItemId = R.id.nav_account_alpha
+            Toast.makeText(this, getString(R.string.toast_reloading_alpha), Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnReloadAccountBeta.setOnClickListener {
+            binding.webViewBeta.reload()
+            binding.bottomNavigation.selectedItemId = R.id.nav_account_beta
+            Toast.makeText(this, getString(R.string.toast_reloading_beta), Toast.LENGTH_SHORT).show()
+        }
+
         // Listeners
+        binding.switchPullToRefresh.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(PREF_PULL_TO_REFRESH, isChecked).apply()
+            applyPullToRefreshEnabled(isChecked)
+        }
+
         binding.switchFabVisibility.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean(PREF_FAB_VISIBLE, isChecked).apply()
             applyFabVisibility(isChecked)
@@ -626,6 +653,15 @@ class MainActivity : AppCompatActivity() {
             }
             prefs.edit().putString(PREF_ACCENT_COLOR, selectedAccent).apply()
             applyAccentColorPreset(selectedAccent)
+        }
+    }
+
+    private fun applyPullToRefreshEnabled(enabled: Boolean) {
+        binding.swipeRefreshAlpha.isEnabled = enabled
+        binding.swipeRefreshBeta.isEnabled = enabled
+        if (!enabled) {
+            binding.swipeRefreshAlpha.isRefreshing = false
+            binding.swipeRefreshBeta.isRefreshing = false
         }
     }
 
@@ -702,6 +738,20 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 else -> false
+            }
+        }
+
+        // Reload active WebView when the user taps the already-active Account tab
+        binding.bottomNavigation.setOnItemReselectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_account_alpha -> {
+                    binding.webViewAlpha.reload()
+                    Toast.makeText(this, getString(R.string.toast_reloading_alpha), Toast.LENGTH_SHORT).show()
+                }
+                R.id.nav_account_beta -> {
+                    binding.webViewBeta.reload()
+                    Toast.makeText(this, getString(R.string.toast_reloading_beta), Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
@@ -785,78 +835,109 @@ class MainActivity : AppCompatActivity() {
                     style.id = styleId;
                     style.type = 'text/css';
                     style.appendChild(document.createTextNode(
-                        '[aria-label*="Get the app" i], ' +
-                        '[aria-label*="Install" i], ' +
-                        'a[href*="play.google.com/store/apps"], ' +
-                        'div[role="dialog"]:has(a[href*="play.google.com"]), ' +
-                        'div[role="banner"]:has(a[href*="play.google.com"]), ' +
-                        'div[role="dialog"]:has(button[aria-label*="Get the app" i]), ' +
-                        'div[role="dialog"]:has(button[aria-label*="Continue in browser" i]) { ' +
+                        '.cdk-overlay-container:has([aria-label*="Gemini" i]), ' +
+                        '.cdk-overlay-backdrop, ' +
+                        '[aria-label*="Get the app" i] { ' +
                         'display: none !important; ' +
-                        'visibility: hidden !important; ' +
-                        'opacity: 0 !important; ' +
-                        'pointer-events: none !important; ' +
                         '}'
                     ));
                     root.appendChild(style);
                 };
 
-                var dismissKeywords = [
+                var autoClickPhrases = [
+                    'continue in the browser',
                     'continue in browser',
-                    'stay in browser',
                     'continue on web',
-                    'stay on web',
-                    'use web',
-                    'not now',
-                    'dismiss'
+                    'stay in browser'
                 ];
 
-                var promoContextKeywords = [
-                    'get the app',
-                    'gemini app',
-                    'google play',
-                    'install',
-                    'open in app',
-                    'switch to the app',
-                    'better in the app'
+                var promoBannerPhrases = [
+                    'chat with gemini in an app',
+                    'do more with the gemini app'
                 ];
 
                 var sweepAndDismissPromos = function() {
                     injectPromoCss();
                     if (!document.body) return;
 
-                    var candidates = document.querySelectorAll('button, a[role="button"], [role="button"]');
-                    for (var i = 0; i < candidates.length; i++) {
-                        var btn = candidates[i];
-                        var label = ((btn.innerText || btn.textContent || '') + ' ' + (btn.getAttribute('aria-label') || '')).trim().toLowerCase();
-                        if (!label) continue;
+                    // 1. Programmatic Auto-Click on "Continue in (the) browser" / "Continue on web" / "Stay in browser"
+                    var clickables = document.querySelectorAll('button, a, [role="button"], span, div');
+                    for (var i = 0; i < clickables.length; i++) {
+                        var el = clickables[i];
+                        var rawText = (el.innerText || el.textContent || '').trim().toLowerCase();
+                        var ariaText = (el.getAttribute('aria-label') || '').trim().toLowerCase();
+                        for (var k = 0; k < autoClickPhrases.length; k++) {
+                            var phrase = autoClickPhrases[k];
+                            if (rawText === phrase || ariaText === phrase) {
+                                var targetBtn = el.closest('button, a, [role="button"]') || el;
+                                if (!targetBtn.dataset.geminiDualAutoClicked) {
+                                    targetBtn.dataset.geminiDualAutoClicked = 'true';
+                                    try { targetBtn.click(); } catch (err) {}
+                                }
+                            }
+                        }
+                    }
 
-                        for (var k = 0; k < dismissKeywords.length; k++) {
-                            var kw = dismissKeywords[k];
-                            if (label === kw || label.indexOf(kw) !== -1) {
-                                var container = btn.closest('div[role="dialog"], div[role="banner"], div[role="alertdialog"], aside, section') || btn.parentElement;
-                                var containerText = container ? (container.innerText || container.textContent || '').toLowerCase() : '';
-                                var isUnconditionalWebContinue = (
-                                    kw === 'continue in browser' ||
-                                    kw === 'stay in browser' ||
-                                    kw === 'continue on web' ||
-                                    kw === 'stay on web' ||
-                                    kw === 'use web'
-                                );
-                                var hasPromoContext = isUnconditionalWebContinue;
-                                if (!hasPromoContext && containerText) {
-                                    for (var p = 0; p < promoContextKeywords.length; p++) {
-                                        if (containerText.indexOf(promoContextKeywords[p]) !== -1) {
-                                            hasPromoContext = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                                if (hasPromoContext && !btn.dataset.geminiDualClicked) {
-                                    btn.dataset.geminiDualClicked = 'true';
-                                    try { btn.click(); } catch (err) {}
-                                }
+                    // 2. Banner & Modal Nuke ("Chat with Gemini in an app" / "Do more with the Gemini app")
+                    var allContainers = document.querySelectorAll(
+                        'div[role="dialog"], div[role="banner"], div[role="region"], aside, section, header, .cdk-overlay-pane, div'
+                    );
+                    var removedOrDismissedPromo = false;
+
+                    for (var j = 0; j < allContainers.length; j++) {
+                        var node = allContainers[j];
+                        if (!node || !node.parentNode) continue;
+                        if (node === document.body || node === document.documentElement) continue;
+
+                        var text = (node.innerText || node.textContent || '').toLowerCase();
+                        if (!text) continue;
+
+                        var matchesPromo = false;
+                        for (var p = 0; p < promoBannerPhrases.length; p++) {
+                            if (text.indexOf(promoBannerPhrases[p]) !== -1) {
+                                matchesPromo = true;
                                 break;
+                            }
+                        }
+                        if (!matchesPromo) continue;
+
+                        // Check if this node is a tight wrapper around the promo (avoid nuking the root app wrapper)
+                        if (node.querySelector('chat-app, main, [role="main"], rich-textarea')) {
+                            continue;
+                        }
+
+                        var closeBtn = node.querySelector(
+                            'button[aria-label*="close" i], button[aria-label*="dismiss" i], [role="button"][aria-label*="close" i], [role="button"][aria-label*="dismiss" i]'
+                        );
+                        if (closeBtn && !closeBtn.dataset.geminiDualClosed) {
+                            closeBtn.dataset.geminiDualClosed = 'true';
+                            try { closeBtn.click(); } catch (err) {}
+                        }
+
+                        try {
+                            node.remove();
+                            removedOrDismissedPromo = true;
+                        } catch (err) {}
+                    }
+
+                    // 3. Remove any residual .cdk-overlay-backdrop or promotional modal overlay containers that dim the screen
+                    var backdrops = document.querySelectorAll('.cdk-overlay-backdrop');
+                    for (var b = 0; b < backdrops.length; b++) {
+                        try { backdrops[b].remove(); } catch (err) {}
+                    }
+
+                    if (removedOrDismissedPromo) {
+                        var overlayContainers = document.querySelectorAll('.cdk-overlay-container');
+                        for (var c = 0; c < overlayContainers.length; c++) {
+                            var oc = overlayContainers[c];
+                            var ocText = (oc.innerText || oc.textContent || '').toLowerCase();
+                            if (
+                                !ocText.trim() ||
+                                ocText.indexOf('gemini app') !== -1 ||
+                                ocText.indexOf('continue in the browser') !== -1 ||
+                                ocText.indexOf('continue in browser') !== -1
+                            ) {
+                                oc.innerHTML = '';
                             }
                         }
                     }
