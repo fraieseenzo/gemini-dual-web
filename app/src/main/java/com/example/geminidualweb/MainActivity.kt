@@ -812,155 +812,76 @@ class MainActivity : AppCompatActivity() {
     private fun buildAppPromoSuppressionScript(): String {
         return """
             (function() {
-                if (window.__geminiDualPromoSuppressed) {
-                    if (typeof window.__geminiDualRunPromoSweep === 'function') {
-                        window.__geminiDualRunPromoSweep();
-                    }
-                    return;
+              var injectSafeLayoutCss = function() {
+                var styleId = 'gemini-dual-safe-layout-css';
+                if (document.getElementById(styleId)) return;
+                var root = document.head || document.documentElement;
+                if (!root) return;
+                var style = document.createElement('style');
+                style.id = styleId;
+                style.type = 'text/css';
+                style.appendChild(document.createTextNode(
+                  'main, [role="main"], .chat-window, infinite-scroller { ' +
+                  '  display: flex !important; ' +
+                  '  flex: 1 1 auto !important; ' +
+                  '  min-height: 0 !important; ' +
+                  '  visibility: visible !important; ' +
+                  '} ' +
+                  'footer, [role="contentinfo"], .bottom-container, .input-area-container { ' +
+                  '  margin-top: auto !important; ' +
+                  '}'
+                ));
+                root.appendChild(style);
+              };
+
+              injectSafeLayoutCss();
+
+              if (window.__gemini_cleaner_installed__) return;
+              window.__gemini_cleaner_installed__ = true;
+
+              function dismissPromptsSafely() {
+                injectSafeLayoutCss();
+
+                const buttons = document.querySelectorAll('button, a, [role="button"], span');
+                for (const el of buttons) {
+                  const text = (el.innerText || el.textContent || '').trim().toLowerCase();
+                  if (text === 'continue in the browser' || text === 'continue in browser') {
+                    el.click();
+                    break;
+                  }
                 }
-                window.__geminiDualPromoSuppressed = true;
 
-                window.addEventListener('beforeinstallprompt', function(e) {
-                    e.preventDefault();
-                    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-                    return false;
-                }, true);
-
-                var injectPromoCss = function() {
-                    var styleId = 'gemini-dual-suppress-app-promo';
-                    if (document.getElementById(styleId)) return;
-                    var root = document.head || document.documentElement;
-                    if (!root) return;
-                    var style = document.createElement('style');
-                    style.id = styleId;
-                    style.type = 'text/css';
-                    style.appendChild(document.createTextNode(
-                        '.cdk-overlay-container:has([aria-label*="Gemini" i]), ' +
-                        '.cdk-overlay-backdrop, ' +
-                        '[aria-label*="Get the app" i] { ' +
-                        'display: none !important; ' +
-                        '}'
-                    ));
-                    root.appendChild(style);
-                };
-
-                var autoClickPhrases = [
-                    'continue in the browser',
-                    'continue in browser',
-                    'continue on web',
-                    'stay in browser'
-                ];
-
-                var promoBannerPhrases = [
-                    'chat with gemini in an app',
-                    'do more with the gemini app'
-                ];
-
-                var sweepAndDismissPromos = function() {
-                    injectPromoCss();
-                    if (!document.body) return;
-
-                    // 1. Programmatic Auto-Click on "Continue in (the) browser" / "Continue on web" / "Stay in browser"
-                    var clickables = document.querySelectorAll('button, a, [role="button"], span, div');
-                    for (var i = 0; i < clickables.length; i++) {
-                        var el = clickables[i];
-                        var rawText = (el.innerText || el.textContent || '').trim().toLowerCase();
-                        var ariaText = (el.getAttribute('aria-label') || '').trim().toLowerCase();
-                        for (var k = 0; k < autoClickPhrases.length; k++) {
-                            var phrase = autoClickPhrases[k];
-                            if (rawText === phrase || ariaText === phrase) {
-                                var targetBtn = el.closest('button, a, [role="button"]') || el;
-                                if (!targetBtn.dataset.geminiDualAutoClicked) {
-                                    targetBtn.dataset.geminiDualAutoClicked = 'true';
-                                    try { targetBtn.click(); } catch (err) {}
-                                }
-                            }
+                const spans = document.querySelectorAll('span, p, div');
+                for (const span of spans) {
+                  if (span.children.length === 0 && (span.textContent || '').includes('Chat with Gemini in an app')) {
+                    let container = span.parentElement;
+                    let depth = 0;
+                    while (container && depth < 4 && container !== document.body) {
+                      if (container.offsetHeight > 0 && container.offsetHeight < 100) {
+                        const closeBtn = container.querySelector('button, [role="button"], [aria-label*="close" i], [aria-label*="dismiss" i]');
+                        if (closeBtn) {
+                          closeBtn.click();
+                        } else {
+                          container.style.display = 'none';
                         }
+                        break;
+                      }
+                      container = container.parentElement;
+                      depth++;
                     }
-
-                    // 2. Banner & Modal Nuke ("Chat with Gemini in an app" / "Do more with the Gemini app")
-                    var allContainers = document.querySelectorAll(
-                        'div[role="dialog"], div[role="banner"], div[role="region"], aside, section, header, .cdk-overlay-pane, div'
-                    );
-                    var removedOrDismissedPromo = false;
-
-                    for (var j = 0; j < allContainers.length; j++) {
-                        var node = allContainers[j];
-                        if (!node || !node.parentNode) continue;
-                        if (node === document.body || node === document.documentElement) continue;
-
-                        var text = (node.innerText || node.textContent || '').toLowerCase();
-                        if (!text) continue;
-
-                        var matchesPromo = false;
-                        for (var p = 0; p < promoBannerPhrases.length; p++) {
-                            if (text.indexOf(promoBannerPhrases[p]) !== -1) {
-                                matchesPromo = true;
-                                break;
-                            }
-                        }
-                        if (!matchesPromo) continue;
-
-                        // Check if this node is a tight wrapper around the promo (avoid nuking the root app wrapper)
-                        if (node.querySelector('chat-app, main, [role="main"], rich-textarea')) {
-                            continue;
-                        }
-
-                        var closeBtn = node.querySelector(
-                            'button[aria-label*="close" i], button[aria-label*="dismiss" i], [role="button"][aria-label*="close" i], [role="button"][aria-label*="dismiss" i]'
-                        );
-                        if (closeBtn && !closeBtn.dataset.geminiDualClosed) {
-                            closeBtn.dataset.geminiDualClosed = 'true';
-                            try { closeBtn.click(); } catch (err) {}
-                        }
-
-                        try {
-                            node.remove();
-                            removedOrDismissedPromo = true;
-                        } catch (err) {}
-                    }
-
-                    // 3. Remove any residual .cdk-overlay-backdrop or promotional modal overlay containers that dim the screen
-                    var backdrops = document.querySelectorAll('.cdk-overlay-backdrop');
-                    for (var b = 0; b < backdrops.length; b++) {
-                        try { backdrops[b].remove(); } catch (err) {}
-                    }
-
-                    if (removedOrDismissedPromo) {
-                        var overlayContainers = document.querySelectorAll('.cdk-overlay-container');
-                        for (var c = 0; c < overlayContainers.length; c++) {
-                            var oc = overlayContainers[c];
-                            var ocText = (oc.innerText || oc.textContent || '').toLowerCase();
-                            if (
-                                !ocText.trim() ||
-                                ocText.indexOf('gemini app') !== -1 ||
-                                ocText.indexOf('continue in the browser') !== -1 ||
-                                ocText.indexOf('continue in browser') !== -1
-                            ) {
-                                oc.innerHTML = '';
-                            }
-                        }
-                    }
-                };
-
-                window.__geminiDualRunPromoSweep = sweepAndDismissPromos;
-                injectPromoCss();
-
-                var startObserver = function() {
-                    var target = document.documentElement || document.body;
-                    if (!target) return;
-                    sweepAndDismissPromos();
-                    var observer = new MutationObserver(function() {
-                        sweepAndDismissPromos();
-                    });
-                    observer.observe(target, { childList: true, subtree: true });
-                };
-
-                if (document.documentElement) {
-                    startObserver();
-                } else {
-                    document.addEventListener('DOMContentLoaded', startObserver, { once: true });
+                    break;
+                  }
                 }
+              }
+
+              dismissPromptsSafely();
+              let tries = 0;
+              const interval = setInterval(() => {
+                dismissPromptsSafely();
+                if (++tries > 15) clearInterval(interval);
+              }, 400);
+
+              window.addEventListener('popstate', () => setTimeout(dismissPromptsSafely, 300));
             })();
         """.trimIndent()
     }
