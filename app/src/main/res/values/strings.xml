@@ -1,11 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Gemini Dual Web</string>
-    <string name="tab_account_alpha">Account 1 (Alpha)</string>
-    <string name="tab_account_beta">Account 2 (Beta)</string>
+    <string name="tab_account_alpha">Account 1</string>
+    <string name="tab_account_beta">Account 2</string>
+    <string name="tab_settings">Settings</string>
     <string name="prompt_vault_title">Native Prompt Vault</string>
     <string name="prompt_vault_subtitle">Tap a prompt template to inject it into the active Gemini session</string>
     <string name="fab_prompt_vault_desc">Open Prompt Vault</string>
     <string name="close_dialog">Close</string>
     <string name="profile_fallback_warning">Multi-Profile WebView API unsupported on this WebView version; using isolated fallback suffix.</string>
+
+    <!-- Settings UI Strings -->
+    <string name="settings_header_title">Workspace Customization</string>
+    <string name="settings_header_subtitle">Configure floating tools, AMOLED rendering, and accent themes without reloading sessions.</string>
+    <string name="settings_section_fab">Prompt Vault Floating Button</string>
+    <string name="settings_fab_visibility_title">Show Prompt Vault FAB</string>
+    <string name="settings_fab_visibility_desc">Display the draggable quick-prompt button over WebViews</string>
+    <string name="settings_fab_size_title">FAB Button Size</string>
+    <string name="settings_fab_size_mini">Mini (40dp)</string>
+    <string name="settings_fab_size_normal">Normal (56dp)</string>
+    <string name="settings_fab_size_large">Large (64dp)</string>
+    <string name="settings_section_appearance">Appearance &amp; Theme</string>
+    <string name="settings_amoled_title">AMOLED Pure Black</string>
+    <string name="settings_amoled_desc">Inject #000000 surface overrides into both Gemini WebViews</string>
+    <string name="settings_accent_title">Accent Color Preset</string>
+    <string name="settings_accent_blue">Gemini Blue (#1A73E8)</string>
+    <string name="settings_accent_emerald">Cyber Emerald (#00E676)</string>
+    <string name="settings_accent_white">Minimalist White (#FFFFFF)</string>
 </resources>
