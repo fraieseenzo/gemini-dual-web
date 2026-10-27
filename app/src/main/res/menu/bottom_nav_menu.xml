@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_account_alpha"
+        android:icon="@drawable/ic_account_alpha"
+        android:title="@string/tab_account_alpha" />
+    <item
+        android:id="@+id/nav_account_beta"
+        android:icon="@drawable/ic_account_beta"
+        android:title="@string/tab_account_beta" />
+</menu>

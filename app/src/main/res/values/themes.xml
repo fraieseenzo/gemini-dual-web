@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.GeminiDualWeb" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/gemini_blue</item>
+        <item name="colorSecondary">@color/gemini_purple</item>
+        <item name="android:windowBackground">@color/amoled_black</item>
+        <item name="android:statusBarColor">@color/amoled_black</item>
+        <item name="android:navigationBarColor">@color/surface_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="ThemeOverlay.GeminiDualWeb.BottomSheetDialog" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.GeminiDualWeb.BottomSheet</item>
+    </style>
+
+    <style name="Widget.GeminiDualWeb.BottomSheet" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="backgroundTint">@color/surface_elevated</item>
+    </style>
+</resources>

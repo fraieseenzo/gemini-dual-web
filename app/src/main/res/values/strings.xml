@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gemini Dual Web</string>
+    <string name="tab_account_alpha">Account 1 (Alpha)</string>
+    <string name="tab_account_beta">Account 2 (Beta)</string>
+    <string name="prompt_vault_title">Native Prompt Vault</string>
+    <string name="prompt_vault_subtitle">Tap a prompt template to inject it into the active Gemini session</string>
+    <string name="fab_prompt_vault_desc">Open Prompt Vault</string>
+    <string name="close_dialog">Close</string>
+    <string name="profile_fallback_warning">Multi-Profile WebView API unsupported on this WebView version; using isolated fallback suffix.</string>
+</resources>
